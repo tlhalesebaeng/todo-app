@@ -5,10 +5,32 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "sqlite"
-  url = env("DATABASE_URL")
+}
+
+model Task {
+  id          Int       @id @default(autoincrement())
+  title       String    @unique
+  description String
+  archived    Boolean   @default(false)
+  status      Status    @relation(fields: [id], references: [id])
+  topic       Topic     @relation(fields: [id], references: [id])
+  dueDate     DateTime
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Topic {
+  id    Int     @id @default(autoincrement())
+  name  String  @unique
+  tasks Task[]
+}
+
+model Status {
+  id    Int     @id @default(autoincrement())
+  name  String  @unique
+  tasks Task[]
 }

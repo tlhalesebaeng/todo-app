@@ -40,6 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# AI files. 
+# AI files
 
 /src/generated/prisma
+
+# development database
+dev.db
