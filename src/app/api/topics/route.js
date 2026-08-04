@@ -21,3 +21,13 @@ export async function POST(request) {
         return NextResponse.json({ message: 'Failed to create topic. Please try again later' }, { status: 500 });
     }
 }
+
+export async function GET(request) {
+    try {
+        const topics = await prisma.topic.findMany();
+        return NextResponse.json(topics, { status: 200 });
+    } catch (error) {
+        console.error(error);
+        return NextResponse.json({ message: 'Failed to retrieve topics. Please try again later' }, { status: 500 });
+    }
+}
