@@ -13,6 +13,15 @@ export async function POST(request) {
             );
         }
 
+        // Ensure that the topic is not a duplicate
+        const topicExists = prisma.topic.findUnique({ where: { name } });
+        if (topicExists) {
+            return NextResponse.json(
+                { message: 'Topic already exists! Please create a different topic' },
+                { status: 400 },
+            );
+        }
+
         const topic = await prisma.topic.create({ data: { name } });
 
         return NextResponse.json(topic, { status: 201 });
