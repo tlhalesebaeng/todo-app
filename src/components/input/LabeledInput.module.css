@@ -1,0 +1,9 @@
+.inputContainer {
+    margin: 20px 0px;
+    display: flex;
+    flex-direction: column;
+}
+
+.input {
+    height: 20px;
+}
