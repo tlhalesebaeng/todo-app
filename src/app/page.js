@@ -1,23 +1,26 @@
 'use client';
 
 import Button from '@/components/button/Button';
-import LabeledInput from '@/components/input/LabeledInput';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import styles from './home.module.css';
 
 export default function Home() {
-    const [data, setData] = useState({ title: '', description: '', dueDate: '', topicId: '' });
-    const [topics, setTopics] = useState(null);
+    const [allTasks, setAllTasks] = useState(null);
+    const [tasks, setTasks] = useState(null);
+    const [tab, setTab] = useState(null);
     const [isLoading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const router = useRouter();
 
     useEffect(() => {
         const fetchTopics = async () => {
             try {
-                const response = await fetch('/api/topics');
-                const fetchedTopics = await response.json();
-                setTopics(fetchedTopics);
+                const response = await fetch('/api/tasks');
+                const fetchedTasks = await response.json();
+                setTasks(() => {
+                    return fetchedTasks.filter((task) => !task.archived);
+                });
+                setAllTasks(fetchedTasks);
                 setLoading(false);
             } catch (error) {
                 console.log(error);
@@ -26,71 +29,99 @@ export default function Home() {
         fetchTopics();
     }, []);
 
-    if (isLoading) return <p>Loading...</p>;
+    useEffect(() => {
+        if (tab === 'archived') {
+            // Set tasks to be all the archived tasks
+            setTasks(() => {
+                return allTasks.filter((task) => task.archived);
+            });
+        }
 
-    const onChange = (field, value) => {
-        setError('');
-        setData((prevState) => ({ ...prevState, [field]: value }));
+        if (tab === 'all') {
+            setTasks(() => {
+                return allTasks.filter((task) => !task.archived);
+            });
+        }
+    }, [tab]);
+
+    const onEdit = (taskId) => {
+        router.push(`/tasks/${taskId}/edit`);
     };
 
-    const onCreate = async (event) => {
-        event.preventDefault();
-
+    const onChangeArchive = async (taskId) => {
+        // If the tab is all then we are archiving otherwise we are unarchiving a task
+        const isArchiving = tab === 'all' || tab === null;
+        const data = { archived: isArchiving };
         try {
-            const response = await fetch('/api/tasks', {
-                method: 'POST',
+            const response = await fetch(`/api/tasks/${taskId}`, {
+                method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
             });
 
-            if (response) {
-                const taskDetails = await response.json();
-                router.push(`/tasks/${taskDetails.id}`);
+            if (response.ok) {
+                setAllTasks((prevTasks) => {
+                    const newTasks = [...prevTasks];
+                    for (let i = 0; i < newTasks.length; i++) {
+                        if (newTasks[i].id === taskId) newTasks[i].archived = isArchiving;
+                    }
+                    return newTasks;
+                });
+
+                // Remove the task from the current list of tasks. This state will receive the latest state of allTasks
+                setTasks(() => {
+                    if (isArchiving) {
+                        return allTasks.filter((task) => !task.archived);
+                    }
+
+                    return allTasks.filter((task) => task.archived);
+                });
             }
         } catch (error) {
             console.log(error);
-            setError(error.message || 'Something went wrong! Please try again later');
         }
     };
 
-    const onNewTopic = (event) => {
-        event.preventDefault();
-        router.push('topics');
+    const onView = (taskId) => {
+        router.push(`/tasks/${taskId}`);
     };
 
+    if (isLoading) return <p>Loading...</p>;
+
     return (
-        <main>
-            <h1>Create New Task</h1>
-            <form>
-                <LabeledInput
-                    labelText="Title"
-                    type="text"
-                    onChange={(event) => onChange('title', event.target.value)}
-                />
-                <LabeledInput
-                    labelText="Due Date"
-                    type="date"
-                    onChange={(event) => onChange('dueDate', event.target.value)}
-                />
-                <section>
-                    <select name="topics" onChange={(event) => onChange('topicId', event.target.selectedIndex)}>
-                        <option value="Loaded Topic 1">Please choose a topic</option>
-                        {topics.map(({ name, id }) => (
-                            <option key={id} value={name}>
-                                {name}
-                            </option>
-                        ))}
-                    </select>
-                    <Button onClick={(event) => onNewTopic(event)}>New Topic</Button>
-                </section>
-                <LabeledInput
-                    labelText="Description"
-                    type="text"
-                    onChange={(event) => onChange('description', event.target.value)}
-                />
-                {error && <p>{error}</p>}
-                <Button onClick={(event) => onCreate(event)}>Create</Button>
-            </form>
-        </main>
+        <section>
+            <h1>Your favourite TODO Tasks app!!!</h1>
+            <ul className={styles.tabContainer}>
+                <li onClick={() => setTab('all')}>All</li>
+                <li onClick={() => setTab('archived')}>Archived</li>
+            </ul>
+            <p>Some filter shit next to the tabs</p>
+            <section>
+                <Button onClick={() => router.push('/tasks')}>Create New Task</Button>
+                <Button onClick={() => router.push('/topics')}>View All Topics</Button>
+            </section>
+            <ul>
+                {tasks.map(({ id, title, dueDate, status, topic }) => {
+                    const btnName = tab === 'all' || tab === null ? 'Archive' : 'Unarchive';
+                    return (
+                        <li key={id}>
+                            <section>
+                                <h3>{title}</h3>
+                                <h4>{topic.name}</h4>
+                                <p>Due Date: {dueDate.slice(0, 10)}</p>
+                            </section>
+                            <section>
+                                <p>{status.name}</p>
+                                <section>
+                                    <Button onClick={() => onView(id)}>View</Button>
+                                    <Button onClick={() => onEdit(id)}>Edit</Button>
+                                    <Button onClick={() => onChangeArchive(id)}>{btnName}</Button>
+                                </section>
+                            </section>
+                        </li>
+                    );
+                })}
+            </ul>
+        </section>
     );
 }
