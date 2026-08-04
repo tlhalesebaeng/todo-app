@@ -2,7 +2,8 @@ import { prisma } from '../lib/prisma.js';
 
 describe('Prisma Task Extension', () => {
     let topic;
-    let status;
+    let inProgressStatus;
+    let completeStatus;
 
     beforeEach(async () => {
         await prisma.task.deleteMany();
@@ -10,25 +11,28 @@ describe('Prisma Task Extension', () => {
         await prisma.status.deleteMany();
 
         topic = await prisma.topic.create({ data: { name: 'Testing' } });
-        status = await prisma.status.create({ data: { name: 'Status 1' } });
+
+        inProgressStatus = await prisma.status.create({ data: { name: 'In Progress' } });
+
+        completeStatus = await prisma.status.create({ data: { name: 'Complete' } });
     });
 
     afterAll(async () => {
         await prisma.$disconnect();
     });
 
-    test('computes overdue as true when due date is in the past', async () => {
+    test('computes overdue as true when due date is in the past and task is not complete', async () => {
         const task = await prisma.task.create({
             data: {
                 title: 'Past Task',
                 description: 'Already overdue',
                 dueDate: new Date('2020-01-01'),
                 topicId: topic.id,
-                statusId: status.id,
+                statusId: inProgressStatus.id,
             },
         });
 
-        const retrieved = await prisma.task.findUnique({ where: { id: task.id } });
+        const retrieved = await prisma.task.findUnique({ where: { id: task.id }, include: { status: true } });
         expect(retrieved).not.toBeNull();
         expect(retrieved.overdue).toBe(true);
     });
@@ -40,31 +44,47 @@ describe('Prisma Task Extension', () => {
                 description: 'Not overdue',
                 dueDate: new Date('2099-01-01'),
                 topicId: topic.id,
-                statusId: status.id,
+                statusId: inProgressStatus.id,
             },
         });
 
-        const retrieved = await prisma.task.findUnique({ where: { id: task.id } });
+        const retrieved = await prisma.task.findUnique({ where: { id: task.id }, include: { status: true } });
         expect(retrieved).not.toBeNull();
         expect(retrieved.overdue).toBe(false);
     });
 
-    test('changing the due date changes the overdue value', async () => {
+    test('computes overdue as false when task is complete even if due date is in the past', async () => {
         const task = await prisma.task.create({
             data: {
-                title: 'Change Due Date',
-                description: 'Testing overdue',
-                dueDate: new Date('2099-01-01'),
+                title: 'Completed Task',
+                description: 'Completed before today',
+                dueDate: new Date('2020-01-01'),
                 topicId: topic.id,
-                statusId: status.id,
+                statusId: completeStatus.id,
             },
         });
 
-        let retrieved = await prisma.task.findUnique({ where: { id: task.id } });
+        const retrieved = await prisma.task.findUnique({ where: { id: task.id }, include: { status: true } });
+        expect(retrieved).not.toBeNull();
         expect(retrieved.overdue).toBe(false);
+    });
 
-        await prisma.task.update({ where: { id: task.id }, data: { dueDate: new Date('2020-01-01') } });
-        retrieved = await prisma.task.findUnique({ where: { id: task.id } });
+    test('changing the status to Complete changes overdue to false', async () => {
+        const task = await prisma.task.create({
+            data: {
+                title: 'Status Change',
+                description: 'Testing overdue',
+                dueDate: new Date('2020-01-01'),
+                topicId: topic.id,
+                statusId: inProgressStatus.id,
+            },
+        });
+
+        let retrieved = await prisma.task.findUnique({ where: { id: task.id }, include: { status: true } });
         expect(retrieved.overdue).toBe(true);
+
+        await prisma.task.update({ where: { id: task.id }, data: { statusId: completeStatus.id } });
+        retrieved = await prisma.task.findUnique({ where: { id: task.id }, include: { status: true } });
+        expect(retrieved.overdue).toBe(false);
     });
 });

@@ -8,9 +8,13 @@ export const prisma = new PrismaClient({ adapter }).$extends({
     result: {
         task: {
             overdue: {
-                needs: { dueDate: true },
+                needs: { dueDate: true, status: true },
                 compute(task) {
-                    return task.dueDate < new Date(Date.now());
+                    if (task.status.name !== 'Complete' && task.dueDate < new Date(Date.now())) {
+                        return true;
+                    }
+
+                    return false;
                 },
             },
         },
