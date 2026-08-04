@@ -146,6 +146,12 @@ Create and synchronize the SQLite database with the Prisma schema.
 npx prisma migrate dev
 ```
 
+Populate the database with the fixed status data (seed data).
+
+```bash
+npx prisma db seed
+```
+
 To view the database entries (Optional)
 
 ```bash
