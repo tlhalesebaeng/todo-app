@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a Todo application built using **Next.js 16**, **React 19**, **Prisma ORM**, and **SQLite**. The application allows users to manage tasks by assigning them a topic, status, due date, and description. Prisma is used to manage the database schema and provide type-safe database access, while SQLite serves as the application's lightweight relational database.
+This is a Todo application built using **Next.js 16**, **Prisma ORM**, and **SQLite**. The application allows users to manage tasks by assigning them a topic, status(fixed), and due date.
 
 ---
 
@@ -10,15 +10,13 @@ This is a Todo application built using **Next.js 16**, **React 19**, **Prisma OR
 
 ## Runtime Dependencies
 
-| Dependency                     | Version | Reason for Inclusion                                                                                                                         |
-| ------------------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| next                           | 16.2.12 | Chosen as the primary web framework because it provides file-based routing, server-side rendering, API routes, and production optimisations. |
-| react                          | 19.2.4  | Chosen for building reusable and interactive user interface components.                                                                      |
-| react-dom                      | 19.2.4  | Required by React to render components into the browser DOM. It is installed automatically as a dependency of React and Next.js.             |
-| prisma                         | 7.9.1   | Chosen as the Object-Relational Mapper (ORM) to manage the database schema, migrations, and type-safe database access.                       |
-| @prisma/client                 | 7.9.1   | Required by Prisma to generate the type-safe client used for querying the SQLite database.                                                   |
-| better-sqlite3                 | 13.0.2  | Chosen as the SQLite database driver because it provides fast and reliable access to SQLite databases.                                       |
-| @prisma/adapter-better-sqlite3 | 7.9.1   | Required so that Prisma can communicate with SQLite using the Better SQLite3 driver.                                                         |
+| Dependency                     | Version | Reason for Inclusion                                                                                                                                                                                                                                 |
+| ------------------------------ | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| next                           | 16.2.12 | Chosen as the primary web framework because it provides file-based routing, server-side rendering, API routes, and production optimisations. The following dependencies came together with this one automatically: react(19.2.4), react-dom(19.2.4 ) |
+| prisma                         | 7.9.1   | Chosen as the Object-Relational Mapper (ORM) to manage the database schema, migrations, and type-safe database access.                                                                                                                               |
+| @prisma/client                 | 7.9.1   | Required by Prisma to generate the type-safe client used for querying the SQLite database.                                                                                                                                                           |
+| better-sqlite3                 | 13.0.2  | Chosen as the SQLite database driver because it provides fast and reliable access to SQLite databases.                                                                                                                                               |
+| @prisma/adapter-better-sqlite3 | 7.9.1   | Required so that Prisma can communicate with SQLite using the Better SQLite3 driver.                                                                                                                                                                 |
 
 ## Development Dependencies
 
@@ -82,16 +80,6 @@ The database contains two one-to-many relationships.
     - One status can have many tasks.
     - Each task has exactly one status.
 
-The relationship can be illustrated as:
-
-```
-Topic (1)
-    │
-    └──────────< Task >──────────┐
-                                 │
-                            Status (1)
-```
-
 ---
 
 # Prerequisites
@@ -108,7 +96,7 @@ Before running the application, ensure the following software is installed:
 Clone the repository.
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/tlhalesebaeng/todo-app
 ```
 
 Navigate into the project directory.
@@ -123,7 +111,46 @@ Install all project dependencies.
 npm install
 ```
 
----
+Create the environment configuration file by copying the example file.
+
+**Linux/macOS**
+
+```bash
+cp .example.env .env
+cp .example.test.env .env.test
+```
+
+**Windows Command Prompt**
+
+```cmd
+copy .example.env .env
+copy .example.test.env .env.test
+```
+
+**Windows PowerShell**
+
+```powershell
+Copy-Item .example.env .env
+Copy-Item .example.test.env .env.test
+```
+
+Generate the Prisma Client.
+
+```bash
+npx prisma generate
+```
+
+Create and synchronize the SQLite database with the Prisma schema.
+
+```bash
+npx prisma migrate dev
+```
+
+To view the database entries (Optional)
+
+```bash
+npx prisma studio
+```
 
 # Running the Application
 
@@ -168,35 +195,3 @@ npm run test:coverage
 ```
 
 Both commands automatically push the Prisma schema to the SQLite test database before executing the test suite.
-
----
-
-# Project Structure
-
-```
-todo-app/
-│
-├── prisma/
-│   └── schema.prisma
-│
-├── src/
-│   ├── app/
-│   ├── generated/
-│   └── ...
-│
-├── package.json
-├── .env
-├── .env.test
-└── README.md
-```
-
----
-
-# Technologies Used
-
-- Next.js 16
-- React 19
-- Prisma ORM
-- SQLite
-- Jest
-- ESLint
