@@ -29,9 +29,16 @@ export default function Topics() {
     const onCreate = async (event) => {
         event.preventDefault();
 
-        // TODO: Confirm that the data is
+        // Ensure that the topic field is set
         if (!data.name) {
             return setError('Topic required! Please fill in the topic field');
+        }
+
+        // Ensure that the topic is not a duplicate
+        for (let i = 0; i < topics.length; i++) {
+            if (topics[i].name === data.name) {
+                return setError('Topic already exists! Please create a different topic');
+            }
         }
 
         try {
@@ -41,10 +48,7 @@ export default function Topics() {
                 body: JSON.stringify(data),
             });
 
-            if (response && response.status === 201) {
-                const topicDetails = await response.json();
-                router.back();
-            }
+            if (response && response.status === 201) router.back();
         } catch (error) {
             console.log(error);
             setError(error.message || 'Something went wrong! Please try again later');
@@ -61,12 +65,16 @@ export default function Topics() {
     return (
         <section>
             <h1>Create New Topic</h1>
-            <p>Please enter the name of the topic to create a new one. Topics help you to sort and organize tasks</p>
+            <p>
+                Please enter the name of the topic to create a new one. Topics help you to sort and organize tasks. They
+                should thus be unique
+            </p>
             <form>
                 <LabeledInput
                     labelText="Topic"
                     type="text"
                     onChange={(event) => onChange('name', event.target.value)}
+                    value={data.name}
                 />
                 {error && <p>{error}</p>}
                 <Button onClick={(event) => onCreate(event)}>Create</Button>
