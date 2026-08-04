@@ -112,7 +112,7 @@ export async function GET(request) {
             options.dueDate = { gte: new Date(afterDate) };
         }
 
-        const tasks = await prisma.task.findMany({ where: options });
+        const tasks = await prisma.task.findMany({ where: options, include: { status: true, topic: true } });
 
         return NextResponse.json(tasks, { status: 200 });
     } catch (error) {
