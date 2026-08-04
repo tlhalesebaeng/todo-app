@@ -14,7 +14,7 @@ export async function POST(request) {
         }
 
         // Ensure that the topic is not a duplicate
-        const topicExists = prisma.topic.findUnique({ where: { name } });
+        const topicExists = await prisma.topic.findUnique({ where: { name } });
         if (topicExists) {
             return NextResponse.json(
                 { message: 'Topic already exists! Please create a different topic' },
