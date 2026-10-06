@@ -12,7 +12,6 @@ export async function POST(request) {
             );
         }
 
-        // Ensure that the topic id is valid
         if (isNaN(Number(body.topicId))) {
             return NextResponse.json(
                 { message: 'Invalid topic id! Please provide a valid topic id and try again' },
