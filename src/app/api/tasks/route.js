@@ -19,7 +19,6 @@ export async function POST(request) {
             );
         }
 
-        // Ensure that the topic exists
         const topicExists = await prisma.topic.findUnique({ where: { id: body.topicId } });
         if (!topicExists) {
             return NextResponse.json(
